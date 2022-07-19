@@ -1,0 +1,9 @@
+SQLAlchemy
+envparse
+pydantic
+requests
+camelot-py[base]
+python-telegram-bot
+psycopg2-binary
+python-telegram-bot-pagination
+beautifulsoup4
