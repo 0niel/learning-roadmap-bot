@@ -3,7 +3,7 @@
 *.psd
 log/
 *.log
-*.db
+*.pdf
 *.json
 *.sqlite
 */.pytest_cache/
