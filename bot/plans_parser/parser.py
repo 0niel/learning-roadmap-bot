@@ -35,7 +35,8 @@ def parse_plans(plans: list):
 
             path = os.path.join(path, plan_filename)
             print("Parsing plan: ", plan_filename)
-            # path = os.path.join(path, "ucheb_plan_05.03.03_GSK_2020.pdf")
+            print("Code: ", plan.code, " / Name: ", plan.name)
+
             with open(path, "wb") as f:
                 f.write(requests.get(plan.url).content)
 
@@ -82,25 +83,14 @@ def parse_plans(plans: list):
                 discipline_objs,
             )
         except Exception as e:
-            print(
-                "============================================================================="
-            )
+            print("===========================================================")
             print("Error: ", e)
-            print(
-                "============================================================================="
-            )
+            print("===========================================================")
 
 
 def parse():
     plans = get_plans()
 
-    start_index = 0
-    for i in range(len(plans)):
-        start_plan_name = "ucheb_plan_09.03.02_GS_2020.pdf"
-        if plans[i].url.split("/")[-1] == start_plan_name:
-            start_index = i
-            break
-    plans = plans[start_index:]
     # Разделить plans на 5 списков
     plans_list = []
     for i in range(5):
