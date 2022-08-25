@@ -1,6 +1,7 @@
 import re
 from enum import IntEnum
 
+import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.ext import (
     CallbackContext,
@@ -164,9 +165,11 @@ def get_disciplines_data(
                         time_text += ", "
                     time_text += " самостоятельная работа - " + str(discipline.sr)
                 time_text += "."
+
             control_forms_text = ", ".join(
                 [control_forms[cf.type] for cf in discipline.control_forms]
             )
+
             if control_forms_text == "":
                 control_forms_text = "нет"
 
@@ -218,69 +221,73 @@ def on_profile_selected(update: Update, context: CallbackContext) -> int:
 
 
 def page_callback(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    page = int(query.data.split("#")[1])
-    education_plan_id = int(query.data.split("#")[2])
+    try:
+        query = update.callback_query
+        page = int(query.data.split("#")[1])
+        education_plan_id = int(query.data.split("#")[2])
 
-    if query.data.startswith("show_load"):
-        disciplines_data = get_disciplines_data(True, education_plan_id)
-        paginator = InlineKeyboardPaginator(
-            len(disciplines_data),
-            current_page=page,
-            data_pattern="page#{page}#" + str(education_plan_id),
-        )
-        context.user_data["show_load"] = True
-        paginator.add_after(
-            InlineKeyboardButton(
-                "Скрыть нагрузку", callback_data=f"hide_load#{page}#{education_plan_id}"
-            ),
-        )
-    elif query.data.startswith("hide_load"):
-        disciplines_data = get_disciplines_data(False, education_plan_id)
-        paginator = InlineKeyboardPaginator(
-            len(disciplines_data),
-            current_page=page,
-            data_pattern="page#{page}#" + str(education_plan_id),
-        )
-        context.user_data["show_load"] = False
-        paginator.add_after(
-            InlineKeyboardButton(
-                "Показать нагрузку",
-                callback_data=f"show_load#{page}#{education_plan_id}",
-            ),
-        )
-    else:
-        if "show_load" not in context.user_data:
-            context.user_data["show_load"] = False
-        disciplines_data = get_disciplines_data(
-            context.user_data["show_load"], education_plan_id
-        )
-        paginator = InlineKeyboardPaginator(
-            len(disciplines_data),
-            current_page=page,
-            data_pattern="page#{page}#" + str(education_plan_id),
-        )
-        if context.user_data["show_load"]:
+        if query.data.startswith("show_load"):
+            disciplines_data = get_disciplines_data(True, education_plan_id)
+            paginator = InlineKeyboardPaginator(
+                len(disciplines_data),
+                current_page=page,
+                data_pattern="page#{page}#" + str(education_plan_id),
+            )
+            context.user_data["show_load"] = True
             paginator.add_after(
                 InlineKeyboardButton(
                     "Скрыть нагрузку",
                     callback_data=f"hide_load#{page}#{education_plan_id}",
                 ),
             )
-        else:
+        elif query.data.startswith("hide_load"):
+            disciplines_data = get_disciplines_data(False, education_plan_id)
+            paginator = InlineKeyboardPaginator(
+                len(disciplines_data),
+                current_page=page,
+                data_pattern="page#{page}#" + str(education_plan_id),
+            )
+            context.user_data["show_load"] = False
             paginator.add_after(
                 InlineKeyboardButton(
                     "Показать нагрузку",
                     callback_data=f"show_load#{page}#{education_plan_id}",
                 ),
             )
+        else:
+            if "show_load" not in context.user_data:
+                context.user_data["show_load"] = False
+            disciplines_data = get_disciplines_data(
+                context.user_data["show_load"], education_plan_id
+            )
+            paginator = InlineKeyboardPaginator(
+                len(disciplines_data),
+                current_page=page,
+                data_pattern="page#{page}#" + str(education_plan_id),
+            )
+            if context.user_data["show_load"]:
+                paginator.add_after(
+                    InlineKeyboardButton(
+                        "Скрыть нагрузку",
+                        callback_data=f"hide_load#{page}#{education_plan_id}",
+                    ),
+                )
+            else:
+                paginator.add_after(
+                    InlineKeyboardButton(
+                        "Показать нагрузку",
+                        callback_data=f"show_load#{page}#{education_plan_id}",
+                    ),
+                )
 
-    query.answer()
-    query.edit_message_text(
-        text="".join(disciplines_data[page]),
-        reply_markup=paginator.markup,
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
+        query.answer()
+        query.edit_message_text(
+            text="".join(disciplines_data[page]),
+            reply_markup=paginator.markup,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+    except telegram.error.BadRequest:
+        pass
 
 
 def init_handlers(dispatcher: Dispatcher):
