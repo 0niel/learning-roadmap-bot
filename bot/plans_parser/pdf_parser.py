@@ -1,18 +1,23 @@
+import logging
 import re
 
 import camelot
+
+camelot.logger.setLevel(logging.ERROR)
 
 from .constants import ControlFormType
 from .education_plan_discipline import EducationPlanDiscipline
 
 REGULAR_DISCIPLINES_TITLE = "Блок 1.Дисциплины (модули)"
-PRACTICE_DISCIPLINES_TITLES = ["Блок 2.Практика", "Блок 2.Практики"]
+PRACTICE_DISCIPLINES_TITLES = ["Блок 2.Практика", "Блок 2.Практики", "Блок 2.Практики"]
 OPTIONAL_DISCIPLINES_TITLES = ["ФТД.Факультативные дисциплины", "ФТД.Факультативы"]
 
 OPTIONAL_PART_TITLE = "Дисциплины по выбору"
 
 
 BLACKLIST_NAMES = [
+    "Базовая часть",
+    "Вариативная часть",
     "Обязательная часть",
     "Часть, формируемая участниками образовательных отношений",
     "Атлетическая гимнастика",
@@ -129,8 +134,10 @@ def _is_in_optional_titles(title: str) -> bool:
 
 
 def _is_in_practice_titles(title: str) -> bool:
+    title = re.sub(r"[^\w\s]", "", title)
     for practice_title in PRACTICE_DISCIPLINES_TITLES:
-        if _compare_strings(title, practice_title):
+        practice_title = re.sub(r"[^\w\s]", "", practice_title)
+        if practice_title.lower() in title.lower():
             return True
     return False
 
