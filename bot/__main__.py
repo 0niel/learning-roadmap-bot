@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 app_dir: Path = Path(__file__).parent.parent
 
 
-def start_parsing(update, context):
-    from bot.plans_parser.parser import parse
-
-    update.message.reply_text("Парсинг начат!")
-    parse()
+#def start_parsing(update, context):
+#    from bot.plans_parser.parser import parse#
+#
+#    update.message.reply_text("Парсинг начат!")
+#    parse()
 
 
 def main() -> None:
