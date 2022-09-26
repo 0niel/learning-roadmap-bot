@@ -20,10 +20,10 @@ app_dir: Path = Path(__file__).parent
 def parse_plans(plans: list):
     for plan in plans:
         try:
-            if (
-                plan.education_level == EducationLevel.SECONDARY
-                or plan.education_level == EducationLevel.POSTGRADUATE
-            ):
+            if plan.education_level in [
+                EducationLevel.SECONDARY,
+                EducationLevel.POSTGRADUATE,
+            ]:
                 continue
 
             plan_filename = plan.url.split("/")[-1]
@@ -92,10 +92,7 @@ def parse():
     plans = get_plans()
 
     # Разделить plans на 5 списков
-    plans_list = []
-    for i in range(5):
-        plans_list.append(plans[i::5])
-
+    plans_list = [plans[i::5] for i in range(5)]
     # Парсить планы из каждого списка в отдельном процессе
     for plans in plans_list:
         Process(target=parse_plans, args=(plans,)).start()

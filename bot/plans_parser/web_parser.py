@@ -7,7 +7,7 @@ from .constants import EDUCATION_LEVELS_NAMES
 from .education_plan_file import EducationPlanFile
 
 MIREA_URL = "https://www.mirea.ru"
-MIREA_PLANS_URL = MIREA_URL + "/sveden/education/"
+MIREA_PLANS_URL = f"{MIREA_URL}/sveden/education/"
 
 PLANS_TABLE_SELECTOR = "table[itemprop='eduOp']"
 
@@ -19,8 +19,7 @@ def _get_plans_table() -> Tag:
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
-    plans_table = soup.select_one(PLANS_TABLE_SELECTOR)
-    return plans_table
+    return soup.select_one(PLANS_TABLE_SELECTOR)
 
 
 def get_plans() -> list[EducationPlanFile]:
@@ -47,20 +46,23 @@ def get_plans() -> list[EducationPlanFile]:
         if "(" in name:
             name = name[: name.find("(")].strip()
             # Get value in ( ... ) with regex
-            profile = re.search(r"\((.*)\)", cells[1].text.strip()).group(1).strip()
+            profile = re.search(r"\((.*)\)", cells[1].text.strip())[1].strip()
 
             if "«" in profile:
                 # Get value in « ... » with regex
-                profile = re.search(r"«(.*)»", profile).group(1).strip()
+                profile = re.search(r"«(.*)»", profile)[1].strip()
         else:
             profile = None
 
         cell_val = cells[2].get_text()
-        education_level = None
-        for key, value in EDUCATION_LEVELS_NAMES.items():
-            if value in cell_val.lower():
-                education_level = key
-                break
+        education_level = next(
+            (
+                key
+                for key, value in EDUCATION_LEVELS_NAMES.items()
+                if value in cell_val.lower()
+            ),
+            None,
+        )
 
         if education_level is None:
             continue

@@ -44,10 +44,9 @@ def on_any_message(update: Update, context: CallbackContext) -> int:
         education_plans = education_direction.education_plans
 
         update.message.reply_text(
-            'Я нашёл направление "{}" для кода {}'.format(
-                education_direction.name, text
-            ),
+            f'Я нашёл направление "{education_direction.name}" для кода {text}'
         )
+
 
         years = []
         for education_plan in education_plans:
@@ -56,24 +55,22 @@ def on_any_message(update: Update, context: CallbackContext) -> int:
 
         years = sorted(years)
 
-        keyboard = []
-        for year in years:
-            keyboard.append(
-                [
-                    InlineKeyboardButton(
-                        str(year),
-                        callback_data=f"year#{year}#{education_direction.id}",
-                    )
-                ]
-            )
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    str(year),
+                    callback_data=f"year#{year}#{education_direction.id}",
+                )
+            ]
+            for year in years
+        ]
+
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.message.reply_text(
             "Выберите год поступления, для которого нужно отобразить траекторию обучения.",
             reply_markup=reply_markup,
         )
         return GetPlanStates.SELECT_YEAR
-    else:
-        pass
 
 
 def on_year_selected(update: Update, context: CallbackContext) -> int:
@@ -151,26 +148,26 @@ def get_disciplines_data(
             if show_load:
                 time_text = "Количество часов:"
                 if discipline.lek:
-                    time_text += " лекции - " + str(discipline.lek)
+                    time_text += f" лекции - {str(discipline.lek)}"
                 if discipline.lab:
                     if time_text:
                         time_text += ", "
-                    time_text += " лабораторные - " + str(discipline.lab)
+                    time_text += f" лабораторные - {str(discipline.lab)}"
                 if discipline.pr:
                     if time_text:
                         time_text += ", "
-                    time_text += " практика - " + str(discipline.pr)
+                    time_text += f" практика - {str(discipline.pr)}"
                 if discipline.sr:
                     if time_text:
                         time_text += ", "
-                    time_text += " самостоятельная работа - " + str(discipline.sr)
+                    time_text += f" самостоятельная работа - {str(discipline.sr)}"
                 time_text += "."
 
             control_forms_text = ", ".join(
                 [control_forms[cf.type] for cf in discipline.control_forms]
             )
 
-            if control_forms_text == "":
+            if not control_forms_text:
                 control_forms_text = "нет"
 
             text = (
@@ -191,8 +188,9 @@ def on_profile_selected(update: Update, context: CallbackContext) -> int:
     education_plan = EducationPlan.get_by_id(education_plan_id)
 
     update.effective_message.reply_text(
-        "Выбран профиль: {}".format(education_plan.profile)
+        f"Выбран профиль: {education_plan.profile}"
     )
+
 
     disciplines_data = get_disciplines_data(False, education_plan_id)
 

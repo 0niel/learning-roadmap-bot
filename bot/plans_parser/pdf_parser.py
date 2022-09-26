@@ -120,17 +120,17 @@ def _parse_row(
 
 
 def _is_blacklisted(name: str) -> bool:
-    for blacklisted_name in BLACKLIST_NAMES:
-        if _compare_strings(name, blacklisted_name):
-            return True
-    return False
+    return any(
+        _compare_strings(name, blacklisted_name)
+        for blacklisted_name in BLACKLIST_NAMES
+    )
 
 
 def _is_in_optional_titles(title: str) -> bool:
-    for optional_title in OPTIONAL_DISCIPLINES_TITLES:
-        if _compare_strings(title, optional_title):
-            return True
-    return False
+    return any(
+        _compare_strings(title, optional_title)
+        for optional_title in OPTIONAL_DISCIPLINES_TITLES
+    )
 
 
 def _is_in_practice_titles(title: str) -> bool:
