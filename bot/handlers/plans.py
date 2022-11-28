@@ -47,7 +47,7 @@ class GetPlanStates(IntEnum):
 
 async def on_any_message(
     update: Update, context: CallbackContext
-) -> GetPlanStates | None:
+) -> GetPlanStates
     # User.create_if_not_exists(update.effective_user.id)
     if update.callback_query:
         text = update.callback_query.data.split("#")[1]
@@ -63,7 +63,7 @@ async def on_any_message(
             )
             # logging
             print(f'Bad direction: "{text}" by {update.message.from_user.to_json()}')
-            return None
+            return
 
         education_plans = education_direction.education_plans
 
