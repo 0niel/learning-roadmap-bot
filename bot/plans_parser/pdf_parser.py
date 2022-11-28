@@ -121,8 +121,7 @@ def _parse_row(
 
 def _is_blacklisted(name: str) -> bool:
     return any(
-        _compare_strings(name, blacklisted_name)
-        for blacklisted_name in BLACKLIST_NAMES
+        _compare_strings(name, blacklisted_name) for blacklisted_name in BLACKLIST_NAMES
     )
 
 

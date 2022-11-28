@@ -1,6 +1,7 @@
-from telegram import ParseMode, Update
-from telegram.ext import CallbackContext, CommandHandler, Dispatcher
-from telegram.utils.helpers import escape_markdown
+from telegram import Update
+from telegram.constants import ParseMode
+from telegram.ext import Application, CallbackContext, CommandHandler
+from telegram.helpers import escape_markdown
 
 
 # f"👋 Привет, {update.message.from_user.first_name}\!\n\n"
@@ -13,8 +14,8 @@ from telegram.utils.helpers import escape_markdown
 # "`09.03.04`\n"
 # "`Программная инженерия`\n"
 # "`Дизайн`",
-def help_callback(update: Update, context: CallbackContext) -> None:
-    update.effective_message.reply_text(
+async def help_callback(update: Update, context: CallbackContext) -> None:
+    await update.effective_message.reply_text(
         escape_markdown(
             f"👋 Привет, {update.message.from_user.first_name}!\n\n"
             "Этот бот позволяет вам получать траекторию обучения из базы данных по коду направления. "
@@ -28,7 +29,7 @@ def help_callback(update: Update, context: CallbackContext) -> None:
     )
 
 
-def init_handlers(dispatcher: Dispatcher):
+def init_handlers(app: Application) -> None:
     # show about information
-    dispatcher.add_handler(CommandHandler("help", help_callback), group=4)
-    dispatcher.add_handler(CommandHandler("start", help_callback), group=4)
+    app.add_handler(CommandHandler("help", help_callback), group=4)
+    app.add_handler(CommandHandler("start", help_callback), group=4)

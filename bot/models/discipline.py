@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from bot.db import base, db_session
 from bot.models.base import BaseModel
 from bot.models.control_form import ControlForm
+from bot.models.discipline_name import DisciplineName
 
 
 class Discipline(BaseModel):
@@ -13,7 +14,7 @@ class Discipline(BaseModel):
     name_id = db.Column(
         db.Integer, db.ForeignKey("discipline_names.id"), nullable=False
     )
-    name = relationship("DisciplineName", back_populates="disciplines", lazy="joined")
+    name = relationship(DisciplineName, back_populates="disciplines", lazy="joined")
     semester = db.Column(db.Integer, nullable=False)
     by_choice = db.Column(db.Boolean, nullable=False)
     is_optional = db.Column(db.Boolean, nullable=False)
