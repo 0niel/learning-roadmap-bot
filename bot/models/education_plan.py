@@ -22,7 +22,7 @@ class EducationPlan(BaseModel):
         db.Integer, db.ForeignKey("education_directions.id")
     )
     education_direction = relationship(
-        "EducationDirection", back_populates="education_plans"
+        "EducationDirection", back_populates="education_plans", lazy="joined"
     )
     year = db.Column(db.Integer, nullable=False)
     education_level = db.Column(db.Integer, nullable=False)
@@ -88,7 +88,7 @@ class EducationPlan(BaseModel):
             )
 
     @staticmethod
-    def search_by_profile(profile):
+    def search_by_profile(profile: str):
         with db_session() as session:
             return (
                 session.query(EducationPlan)

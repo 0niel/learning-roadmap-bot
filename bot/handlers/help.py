@@ -24,7 +24,12 @@ async def help_callback(update: Update, context: CallbackContext) -> None:
             version=2,
         )
         + "*Примеры использования\:*\n"
-        "`09.03.04`\n",
+        "`09.03.04`\n"
+        "`@learning_roadmap_bot 09.03.04`\n"
+        "`@learning_roadmap_bot Программная инженерия`\n"
+        "`@learning_roadmap_bot Разработка`\n\n\n"
+        "Бот поддерживает инлайн режим, чтобы использовать его, просто начните вводить "
+        "код направления, название профиля или название направления\.\n\n",
         parse_mode=ParseMode.MARKDOWN_V2,
     )
 

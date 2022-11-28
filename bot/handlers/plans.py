@@ -1,15 +1,24 @@
+import asyncio
 import contextlib
 import re
 from enum import IntEnum
 from typing import Any
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, error
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    Update,
+    error,
+)
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CallbackContext,
     CallbackQueryHandler,
     ConversationHandler,
+    InlineQueryHandler,
     MessageHandler,
     filters,
 )
@@ -40,8 +49,10 @@ async def on_any_message(
     update: Update, context: CallbackContext
 ) -> GetPlanStates | None:
     # User.create_if_not_exists(update.effective_user.id)
-
-    text = update.message.text.replace(" ", "")
+    if update.callback_query:
+        text = update.callback_query.data.split("#")[1]
+    else:
+        text = update.effective_message.text.replace(" ", "")
 
     if re.match(RE_CODE, text):
         education_direction = EducationDirection.get_by_code(text)
@@ -56,12 +67,20 @@ async def on_any_message(
 
         education_plans = education_direction.education_plans
 
-        await update.message.reply_text(
-            f'Я нашёл направление "{education_direction.name}" для кода {text}'
-        )
+        text = f'Я нашёл направление "{education_direction.name}" для кода {text}'
+
+        if update.message:
+            await update.message.reply_text(text)
+        else:
+            await update.callback_query.edit_message_text(text)
 
         # logging
-        print(f'Successful direction: "{text}" by {update.message.from_user.to_json()}')
+        user = (
+            update.message.from_user.to_json()
+            if update.message
+            else update.callback_query.from_user.to_json()
+        )
+        print(f'Successful direction: "{text}" by {user}')
 
         years = []
         for education_plan in education_plans:
@@ -81,10 +100,14 @@ async def on_any_message(
         ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
-            "Выберите год поступления, для которого нужно отобразить траекторию обучения.",
-            reply_markup=reply_markup,
-        )
+        text = "Выберите год поступления, для которого нужно отобразить траекторию обучения."
+        if update.message:
+            await update.message.reply_text(text, reply_markup=reply_markup)
+        else:
+            await asyncio.sleep(1)
+            await update.callback_query.edit_message_text(
+                text, reply_markup=reply_markup
+            )
         return GetPlanStates.SELECT_YEAR
 
 
@@ -204,9 +227,12 @@ async def on_profile_selected(update: Update, context: CallbackContext) -> int:
     education_plan_id = int(update.callback_query.data.split("#")[1])
     education_plan = EducationPlan.get_by_id(education_plan_id)
 
-    await update.effective_message.reply_text(
-        f"Выбран профиль: {education_plan.profile}"
-    )
+    text = f"Выбран профиль: {education_plan.profile}"
+    if update.effective_message:
+        await update.effective_message.reply_text(text)
+    else:
+        await update.callback_query.edit_message_text(text)
+        await asyncio.sleep(1)
 
     # logging
     data = {
@@ -234,11 +260,20 @@ async def on_profile_selected(update: Update, context: CallbackContext) -> int:
         ),
     )
 
-    await update.effective_message.edit_text(
-        text="".join(disciplines_data[1]),
-        reply_markup=paginator.markup,
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
+    text = "".join(disciplines_data[1])
+
+    if update.effective_message:
+        await update.effective_message.edit_text(
+            text,
+            reply_markup=paginator.markup,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+    else:
+        await update.callback_query.edit_message_text(
+            text,
+            reply_markup=paginator.markup,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
 
     await update.callback_query.answer()
 
@@ -326,8 +361,110 @@ async def page_callback(update: Update, context: CallbackContext) -> None:
         )
 
 
+async def inline_query(update: Update, context: CallbackContext) -> None:
+    if not (query := update.inline_query.query):
+        return
+
+    if len(query) < 3:
+        return
+
+    if query[0].isdigit():
+        directions_by_code = EducationDirection.search_by_code(query)
+
+        if len(directions_by_code) == 0:
+            return
+
+        results = [
+            InlineQueryResultArticle(
+                id=str(direction.id),
+                title=direction.name,
+                description=f"Код: {direction.code}",
+                input_message_content=InputTextMessageContent(
+                    f"Направление: {direction.name}\n"
+                    f"Код: {direction.code}"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Выбрать профиль",
+                                callback_data=f"direction#{direction.code}",
+                            )
+                        ]
+                    ]
+                ),
+            )
+            for direction in directions_by_code
+        ]
+
+    else:
+        if len(query) < 5:
+            return
+
+        education_profiles = EducationPlan.search_by_profile(query)
+        directions_by_name = EducationDirection.search_by_name(query)
+
+        if len(education_profiles) == 0 and len(directions_by_name) == 0:
+            return
+
+        results = [
+            InlineQueryResultArticle(
+                id=str(profile.id),
+                title=profile.profile,
+                description=f"Код: {profile.education_direction.code}\n"
+                f"Год: {profile.year}\n"
+                f"{profile.education_direction.name}",
+                input_message_content=InputTextMessageContent(
+                    f"Профиль: {profile.profile}\n\n"
+                    f"Направление: {profile.education_direction.name}\n\n"
+                    f"Код: {profile.education_direction.code}; Год: {profile.year}"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Показать план",
+                                callback_data=f"profile#{profile.id}",
+                            )
+                        ]
+                    ]
+                ),
+            )
+            for profile in education_profiles
+        ]
+
+        results += [
+            InlineQueryResultArticle(
+                id=str(direction.id),
+                title=direction.name,
+                description=f"Код: {direction.code}",
+                input_message_content=InputTextMessageContent(
+                    f"Направление: {direction.name}\nКод: {direction.code}"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Выбрать профиль",
+                                callback_data=f"direction#{direction.code}",
+                            )
+                        ]
+                    ]
+                ),
+            )
+            for direction in directions_by_name
+        ]
+
+    await update.inline_query.answer(results=results[:50], cache_time=1)
+
+
 def init_handlers(app: Application) -> None:
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_any_message))
+    app.add_handler(
+        CallbackQueryHandler(
+            on_any_message, pattern=r"^direction#\d{2}\.\d{2}\.\d{2}$"
+        ),
+    )
     app.add_handler(
         CallbackQueryHandler(
             on_year_selected,
@@ -344,5 +481,10 @@ def init_handlers(app: Application) -> None:
         CallbackQueryHandler(
             page_callback,
             pattern="^(page#)|(show_load#)|(hide_load#)",
+        )
+    )
+    app.add_handler(
+        InlineQueryHandler(
+            inline_query,
         )
     )

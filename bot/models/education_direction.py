@@ -56,7 +56,7 @@ class EducationDirection(BaseModel):
             return education_direction
 
     @staticmethod
-    def get_by_code(code):
+    def get_by_code(code: str):
         with db_session() as session:
             return (
                 session.query(EducationDirection)
@@ -67,12 +67,34 @@ class EducationDirection(BaseModel):
             )
 
     @staticmethod
-    def get_by_name(name):
+    def get_by_name(name: str):
         with db_session() as session:
             return (
                 session.query(EducationDirection)
                 .filter(
                     EducationDirection.name == name,
+                )
+                .all()
+            )
+
+    @staticmethod
+    def search_by_code(code: str):
+        with db_session() as session:
+            return (
+                session.query(EducationDirection)
+                .filter(
+                    EducationDirection.code.like(f"%{code}%"),
+                )
+                .all()
+            )
+
+    @staticmethod
+    def search_by_name(name: str):
+        with db_session() as session:
+            return (
+                session.query(EducationDirection)
+                .filter(
+                    EducationDirection.name.like(f"%{name}%"),
                 )
                 .all()
             )
