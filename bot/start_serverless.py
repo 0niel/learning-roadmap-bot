@@ -1,13 +1,33 @@
+import os
 import json
 import logging
+import logging_loki
 
 from telegram import Update
 from telegram.ext import Application
 
 from bot import config
 
+
+if config.USE_LOKI_LOGGER:
+    loki_handler = logging_loki.LokiHandler(
+        url=config.LOKI_URL,
+        auth=(config.LOKI_AUTH_LOGIN, config.LOKI_AUTH_PASSWORD),
+        tags={"app": "learning-roadmap-bot", "env": "production"},
+        version="1",
+    )
+
+    logging.basicConfig(
+        level=logging.INFO,
+        handlers=[loki_handler],
+    )
+else:
+    logging.basicConfig(
+        level=logging.INFO,
+    )
+
+
 logger = logging.getLogger(__name__)
-logger.setLevel("INFO")
 
 
 async def process_update(event, application):

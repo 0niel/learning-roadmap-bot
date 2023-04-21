@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import logging
 import re
 from enum import IntEnum
 from typing import Any
@@ -29,6 +30,8 @@ from bot.models.education_direction import EducationDirection
 from bot.models.education_plan import EducationPlan
 from bot.plans_parser.constants import ControlFormType
 
+logger = logging.getLogger(__name__)
+
 RE_CODE = r"^[0-9]{2}.[0-9]{2}.[0-9]{2}$"
 
 CONTROL_FORMS = {
@@ -45,9 +48,7 @@ class GetPlanStates(IntEnum):
     SELECT_PROFILE = 2
 
 
-async def on_any_message(
-    update: Update, context: CallbackContext
-) -> GetPlanStates
+async def on_any_message(update: Update, context: CallbackContext) -> GetPlanStates:
     # User.create_if_not_exists(update.effective_user.id)
     if update.callback_query:
         text = update.callback_query.data.split("#")[1]
@@ -63,7 +64,7 @@ async def on_any_message(
             )
             # logging
             print(f'Bad direction: "{text}" by {update.message.from_user.to_json()}')
-            return
+            return None
 
         education_plans = education_direction.education_plans
 
@@ -81,6 +82,11 @@ async def on_any_message(
             else update.callback_query.from_user.to_json()
         )
         print(f'Successful direction: "{text}" by {user}')
+
+        if update.message:
+            logger.info(update.message.to_json())
+        else:
+            logger.info(update.callback_query.to_json())
 
         years = []
         for education_plan in education_plans:
@@ -127,6 +133,8 @@ async def on_year_selected(update: Update, context: CallbackContext) -> int:
     print(
         f'Selected direction year: "{data}" by {update.callback_query.from_user.to_json()}'
     )
+
+    logger.info(update.callback_query.to_json())
 
     keyboard = []
     for education_plan in education_plans:
@@ -245,6 +253,8 @@ async def on_profile_selected(update: Update, context: CallbackContext) -> int:
     }
     print(f'Profile: "{data}" by {update.callback_query.from_user.to_json()}')
 
+    logger.info(update.callback_query.to_json())
+
     disciplines_data = get_disciplines_data(False, education_plan_id)
 
     pages_count = len(disciplines_data)
@@ -298,6 +308,8 @@ async def page_callback(update: Update, context: CallbackContext) -> None:
             ).code,
         }
         print(f'Page callback: "{data}" by {update.callback_query.from_user.to_json()}')
+
+        logger.info(update.callback_query.to_json())
 
         if query.data.startswith("show_load"):
             disciplines_data = get_disciplines_data(True, education_plan_id)
@@ -380,8 +392,7 @@ async def inline_query(update: Update, context: CallbackContext) -> None:
                 title=direction.name,
                 description=f"Код: {direction.code}",
                 input_message_content=InputTextMessageContent(
-                    f"Направление: {direction.name}\n"
-                    f"Код: {direction.code}"
+                    f"Направление: {direction.name}\n" f"Код: {direction.code}"
                 ),
                 reply_markup=InlineKeyboardMarkup(
                     [
