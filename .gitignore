@@ -12,3 +12,5 @@ jsons/
 __pycache__/
 db_data/
 /config/
+.yc
+yappa*

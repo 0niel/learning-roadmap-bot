@@ -11,7 +11,6 @@ class ControlFormType(IntEnum):
 
 
 class EducationLevel(IntEnum):
-
     # Уровень образования:
     # 1) высшее образование - бакалавриат;
     # 2) высшее образование - специалитет;

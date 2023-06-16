@@ -1,13 +1,11 @@
-import os
 import json
 import logging
-import logging_loki
 
+import logging_loki
 from telegram import Update
 from telegram.ext import Application
 
 from bot import config
-
 
 if config.USE_LOKI_LOGGER:
     loki_handler = logging_loki.LokiHandler(
