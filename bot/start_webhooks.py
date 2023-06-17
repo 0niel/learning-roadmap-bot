@@ -1,11 +1,16 @@
 import logging
+from contextlib import asynccontextmanager
 
 import logging_loki
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse, Response
 from telegram import Update
-from telegram.ext import AIORateLimiter, Application
+from telegram.ext import Application
+from yappa.handlers.asgi import call_app
+from yappa.handlers.common import patch_response
+
 
 from bot.config import (
     BOT_URL,
@@ -37,17 +42,47 @@ else:
 logger = logging.getLogger(__name__)
 
 
-application = (
-    Application.builder()
-    .token(TELEGRAM_TOKEN)
-    .rate_limiter(AIORateLimiter(max_retries=2))
-    .read_timeout(40)
-    .write_timeout(40)
-    .updater(None)
-    .build()
-)
+application = Application.builder().token(TELEGRAM_TOKEN).updater(None).build()
 
 
+async def error_handler(update: object, context) -> None:
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    await sentry_sdk.capture_exception(context.error)
+
+
+webhook_setup_done = False
+
+
+async def setup_webhook():
+    global webhook_setup_done
+    if webhook_setup_done:
+        return
+
+    from bot import handlers
+
+    handlers.setup(application, app)
+
+    await application.bot.set_webhook(
+        url=f"{BOT_URL}/telegram", allowed_updates=Update.ALL_TYPES
+    )
+
+    webhook_setup_done = True
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await setup_webhook()
+    await application.initialize()
+    await application.start()
+    yield
+    await application.stop()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.post("/telegram")
 async def telegram(request: Request):
     """Handle incoming Telegram updates by putting them into the `update_queue`"""
 
@@ -57,41 +92,21 @@ async def telegram(request: Request):
     return Response(status_code=200)
 
 
+@app.get("/health")
 async def health(request: Request):
     return JSONResponse({"status": "ok"})
 
 
-async def setup_webhook():
-    from bot import handlers
+async def handle(event, context):
+    if not event:
+        return {
+            "statusCode": 500,
+            "body": "got empty event",
+        }
 
-    handlers.setup(application)
-
-    await application.bot.set_webhook(
-        url=f"{BOT_URL}/telegram", allowed_updates=Update.ALL_TYPES
-    )
-
-
-app = FastAPI()
-
-
-# Set up webserver
-app.add_route("/telegram", telegram, methods=["POST"])
-app.add_route("/health", health, methods=["GET"])
-
-
-async def run() -> None:
-    """Start the bot."""
-    await setup_webhook()
-
-    await application.initialize()
-    await application.start()
-
-
-@app.middleware("http")
-async def on_any_request(request: Request, call_next):
-    if not application.running:
-        await run()
-
-    response = await call_next(request)
-
-    return response
+    async with application:
+        await setup_webhook()
+        await application.start()
+        response = await call_app(app, event)
+        await application.stop()
+        return patch_response(response)

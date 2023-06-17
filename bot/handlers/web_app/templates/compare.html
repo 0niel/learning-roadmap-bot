@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Сравнение учебных планов</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css"
+            rel="stylesheet">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="MobileOptimized" content="176" />
+        <meta name="HandheldFriendly" content="True" />
+        <meta name="robots" content="noindex,nofollow" />
+        <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
+        <script>
+            function setThemeClass() {
+                document.documentElement.className = Telegram.WebApp.colorScheme;
+            }
+    
+            Telegram.WebApp.onEvent('themeChanged', setThemeClass);
+            setThemeClass();
+        </script>
+        <style>
+            body {
+                font-family: sans-serif;
+                background-color: var(--tg-theme-bg-color, #ffffff);
+                color: var(--tg-theme-text-color, #222222);
+                font-size: 16px;
+                margin: 0;
+                padding: 0;
+                color-scheme: var(--tg-color-scheme);
+            }
+    
+            a {
+                color: var(--tg-theme-link-color, #2678b6);
+            }
+    
+            button {
+                display: block;
+                width: 100%;
+                font-size: 14px;
+                margin: 15px 0;
+                padding: 12px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: var(--tg-theme-button-color, #50a8eb);
+                color: var(--tg-theme-button-text-color, #ffffff);
+                cursor: pointer;
+            }
+    
+            button[disabled] {
+                opacity: 0.6;
+                cursor: auto;
+                pointer-events: none;
+            }
+    
+            button.close_btn {
+                /*position: fixed;*/
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 0;
+                margin: 0;
+                padding: 16px 20px;
+                text-transform: uppercase;
+            }
+    
+            section {
+                padding: 15px 15px 65px;
+                text-align: center;
+            }
+    
+            p {
+                margin: 40px 0 15px;
+            }
+    
+            ul {
+                text-align: left;
+            }
+    
+            li {
+                color: var(--tg-theme-hint-color, #a8a8a8);
+            }
+    
+            textarea {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 7px;
+            }
+    
+            pre {
+                background: rgba(0, 0, 0, .07);
+                border-radius: 4px;
+                padding: 4px;
+                margin: 7px 0;
+                word-break: break-all;
+                word-break: break-word;
+                white-space: pre-wrap;
+                text-align: left;
+            }
+    
+            .dark pre {
+                background: rgba(255, 255, 255, .15);
+            }
+    
+            .hint {
+                font-size: .8em;
+                color: var(--tg-theme-hint-color, #a8a8a8);
+            }
+    
+            .ok {
+                color: green;
+            }
+    
+            .err {
+                color: red;
+            }
+    
+            #fixed_wrap {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: 0;
+                transform: translateY(100vh);
+            }
+    
+        </style>
+    </head>
+    <body style="visibility: hidden;">
+        <section id="select-plans-section">
+            <div class="w-full flex flex-col items-center">
+                <div class="w-full flex flex-row items-center">
+                    <label for="year-select-1" class="mr-2">Год</label>
+                    <select id="year-select-1"
+                        class="border border-gray-700 p-1 rounded w-full">
+                        {% for year in plans | map(attribute='year') | unique %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="w-full flex flex-row items-center mt-4">
+                    <label for="direction-select-1" class="mr-2">Направление</label>
+                    <select id="direction-select-1"
+                        class="border border-gray-700 p-1 rounded w-full"
+                        disabled></select>
+                </div>
+
+                <div class="w-full flex flex-row items-center mt-4">
+                    <label for="profile-select-1" class="mr-2">Профиль</label>
+                    <select id="profile-select-1"
+                        class="border border-gray-700 p-1 rounded w-full"
+                        disabled></select>
+                </div>
+
+                <hr class="my-4 w-full border-gray-700">
+
+                <div class="w-full flex flex-row items-center">
+                    <label for="year-select-2" class="mr-2">Год</label>
+                    <select id="year-select-2"
+                        class="border border-gray-700 p-1 rounded w-full">
+                        {% for year in plans | map(attribute='year') | unique %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="w-full flex flex-row items-center mt-4">
+                    <label for="direction-select-2" class="mr-2">Направление</label>
+                    <select id="direction-select-2"
+                        class="border border-gray-700 p-1 rounded w-full"
+                        disabled></select>
+                </div>
+
+                <div class="w-full flex flex-row items-center mt-4">
+                    <label for="profile-select-2" class="mr-2">Профиль</label>
+                    <select id="profile-select-2"
+                        class="border border-gray-700 p-1 rounded w-full"
+                        disabled></select>
+                </div>
+            </div>
+        </section>
+        <section id="compare-section" class="hidden">
+            <div class="w-full mt-4">
+                <table id="compare-table"
+                    class="hidden w-full border-collapse border border-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="border border-gray-700 p-2"
+                                id="semester-label">Семестр</th>
+                            <th class="border border-gray-700 p-2"
+                                id="direction-label-1">Учебный план
+                                1</th>
+                            <th class="border border-gray-700 p-2"
+                                id="direction-label-2">Учебный план
+                                2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <button id="prev-semester" disabled>Предыдущий семестр</button>
+            <button id="next-semester" disabled>Следующий семестр</button>
+        </section>
+        <script src="https://webappcontent.telegram.org/js/jquery.min.js"></script>
+        <script>
+            const plans = {{ plans | tojson }};
+            let state = {
+                year1: null,
+                direction1: null,
+                profile1: null,
+                year2: null,
+                direction2: null,
+                profile2: null
+            };
+        
+            function filterPlans(year, direction, profile) {
+                return plans.filter(plan => {
+                    if (year && plan.year !== year) {
+                        return false;
+                    }
+                    if (direction && plan.education_direction !== direction) {
+                        return false;
+                    }
+                    if (profile && plan.profile !== profile) {
+                        return false;
+                    }
+                    return true; 
+                });
+            }
+        
+            function updateSelect(selectId, items, valueField) {
+                const select = $(`#${selectId}`);
+                select.empty();
+        
+                items.forEach(item => {
+                    const option = $('<option>', {
+                        value: item[valueField],
+                        text: item[valueField]
+                    });
+                    select.append(option);
+                });
+        
+                select.prop('disabled', items.length === 0);
+            }
+
+            function getOnlyUniqe(arrayOfObjects, field) {
+                const uniqe = [];
+                const uniqeValues = [];
+                arrayOfObjects.forEach(item => {
+                    if (!uniqeValues.includes(item[field])) {
+                        uniqe.push(item);
+                        uniqeValues.push(item[field]);
+                    }
+                });
+                
+                uniqe.sort((a, b) => {
+                    if (a[field] < b[field]) {
+                        return -1;
+                    }
+                    if (a[field] > b[field]) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                return uniqe;
+                
+            }
+        
+            function updateState(field, value) {
+                state[field] = value;
+
+                if (field === 'year1') {
+                    const directions = filterPlans(Number(state.year1));
+                    updateSelect('direction-select-1', getOnlyUniqe(directions, 'education_direction'), 'education_direction');
+                } else if (field === 'direction1') {
+                    const profiles = filterPlans(Number(state.year1), state.direction1);
+                    updateSelect('profile-select-1', getOnlyUniqe(profiles, 'profile'), 'profile');
+                } else if (field === 'year2') {
+                    const directions = filterPlans(Number(state.year2));
+                    updateSelect('direction-select-2', getOnlyUniqe(directions, 'education_direction'), 'education_direction');
+                } else if (field === 'direction2') {
+                    const profiles = filterPlans(Number(state.year2), state.direction2);
+                    updateSelect('profile-select-2', getOnlyUniqe(profiles, 'profile'), 'profile');
+                }
+        
+                if (state.year1 && state.direction1 && state.profile1 && state.year2 && state.direction2 && state.profile2) {
+                    setMainButtonVisible(true);
+                } else {
+                    setMainButtonVisible(false);
+                }
+            }
+        
+            $('select').on('change', function () {
+                updateState(this.id.replace('-select-', ''), $(this).val());
+            });
+        
+            updateState('year1', $('#year-select-1').val());
+            updateState('year2', $('#year-select-2').val());
+        
+            $('body').css('visibility', '');
+
+       
+
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            
+            var initData = Telegram.WebApp.initData || '';
+            var initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+            let firstPlan = null;
+            let secondPlan = null;
+
+            let currentSemester = 1;
+            let maxSemesters = 0;
+
+            function checkSemesterButtons(maxSemesters) {
+                $("#prev-semester").prop('disabled', currentSemester === 1);
+                $("#next-semester").prop('disabled', currentSemester === maxSemesters);
+            }
+
+            $("#prev-semester").click(function () {
+                currentSemester--;
+                updateSemesterTable(currentSemester);
+                checkSemesterButtons(maxSemesters);
+            });
+
+            $("#next-semester").click(function () {
+                currentSemester++;
+                updateSemesterTable(currentSemester);
+                checkSemesterButtons(maxSemesters);
+            });
+
+            function updateSemesterTable(semester) {
+                const tableBody = $("#compare-table tbody");
+                tableBody.empty();
+
+                const firstPlanDisciplines = firstPlan.disciplines.filter(
+                    discipline => discipline.semester === semester
+                );
+                const secondPlanDisciplines = secondPlan.disciplines.filter(
+                    discipline => discipline.semester === semester
+                );
+
+                firstPlanDisciplines.forEach(discipline => {
+                    const tableRow = $("<tr>");
+
+                    const disciplineNameCell = $("<td>", {
+                        class: "border border-gray-700 p-2",
+                        text: discipline.name.text
+                    });
+                    tableRow.append(disciplineNameCell);
+
+                    const firstPlanCell = $("<td>", {
+                        class: "border border-gray-700 p-2",
+                        text: "✓"
+                    });
+                    tableRow.append(firstPlanCell);
+
+                    const secondPlanDiscipline = secondPlanDisciplines.find(
+                        d => d.name.text === discipline.name.text
+                    );
+                    const secondPlanCell = $("<td>", {
+                        class: "border border-gray-700 p-2",
+                        text: secondPlanDiscipline ? "✓" : "",
+                        css: {
+                            "background-color": secondPlanDiscipline ? "" : "red"
+                        }
+                    });
+                    tableRow.append(secondPlanCell);
+
+                    tableBody.append(tableRow);
+                });
+
+                secondPlanDisciplines.forEach(discipline => {
+                    if (!firstPlanDisciplines.find(d => d.name.text === discipline.name.text)) {
+                        const tableRow = $("<tr>");
+
+                        const disciplineNameCell = $("<td>", {
+                            class: "border border-gray-700 p-2",
+                            text: discipline.name.text
+                        });
+                        tableRow.append(disciplineNameCell);
+
+                        const firstPlanCell = $("<td>", {
+                            class: "border border-gray-700 p-2",
+                            text: "",
+                            css: {
+                                "background-color": "red"
+                            }
+                        });
+                        tableRow.append(firstPlanCell);
+
+                        const secondPlanCell = $("<td>", {
+                            class: "border border-gray-700 p-2",
+                            text: "✓"
+                        });
+                        tableRow.append(secondPlanCell);
+
+                        tableBody.append(tableRow);
+                    }
+                });
+
+                $("#semester-label").text(`Семестр ${semester}`);
+
+                $("#compare-table").removeClass("hidden");
+            }
+
+            Telegram.WebApp.MainButton
+                .setText('Сравнить')
+                .onClick(function () {
+                    const data = {
+                        _auth: initData,
+                        year1: state.year1,
+                        direction1: state.direction1,
+                        profile1: state.profile1,
+                        year2: state.year2,
+                        direction2: state.direction2,
+                        profile2: state.profile2
+                    }
+                    
+                    $.ajax('/getCompareResult', {
+                        type: 'POST',
+                        data:  JSON.stringify(data),
+                        contentType: "application/json",
+                        dataType: 'json',
+                        success: function (result) {
+                            firstPlan = result.first_plan;
+                            secondPlan = result.second_plan;
+
+                            $("#select-plans-section").addClass("hidden");
+                            $("#compare-section").removeClass("hidden");
+                            setMainButtonVisible(false);
+                            
+                            const tableBody = $("#compare-table tbody");
+                            tableBody.empty();
+                            
+                            const maxFirst = Math.max(...firstPlan.disciplines.map(discipline => discipline.semester));
+                            const maxSecond = Math.max(...secondPlan.disciplines.map(discipline => discipline.semester));
+
+                            maxSemesters = Math.min(
+                                maxFirst,
+                                maxSecond
+                            );
+
+                            console.log(firstPlan);
+
+                            if (maxFirst != maxSecond) {
+                                alert(`Количество семестров в планах не совпадает! Мы ограничили сравнение до ${maxSemesters} семестров`);
+                            }
+
+                            currentSemester = 1;
+                            updateSemesterTable(currentSemester);
+                            checkSemesterButtons(maxSemesters);
+
+                            $("#compare-table").removeClass("hidden");    
+                          
+                            $("#compare-section").prepend(
+                                $("<div>", {
+                                    id: 'first-plan-name',
+                                    class: "text-center text-sm font-bold",
+                                    text: `Учебный план 1: ${firstPlan.profile} (${firstPlan.year})`
+                                })
+                            );
+            
+                            $("#compare-section").prepend(
+                                $("<div>", {
+                                    id: 'second-plan-name',
+                                    class: "text-center text-sm font-bold",
+                                    text: `Учебный план 2: ${secondPlan.profile} (${secondPlan.year})`
+                                })
+                            );
+
+                            Telegram.WebApp.BackButton.show().onClick(function () {
+                                $("#select-plans-section").removeClass("hidden");
+                                $("#compare-section").addClass("hidden");
+                                Telegram.WebApp.BackButton.hide();
+                            });
+                        },
+                        error: function (xhr) {
+                            alert('Ошибка сервера');
+                        }
+                    });
+                });
+        
+            function setMainButtonVisible(visible) {
+                var mainButton = Telegram.WebApp.MainButton;
+                if (!visible) {
+                    mainButton.hide();
+                } else {
+                    mainButton.show();
+                }
+            }
+        
+            function round(val, d) {
+                var k = Math.pow(10, d || 0);
+                return Math.round(val * k) / k;
+            }
+        </script>
+    </body>
+</html>

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from bot.db import base, db_session
 from bot.models.base import BaseModel
 from bot.models.discipline import Discipline
+from bot.models.education_direction import EducationDirection
 
 discipline_education_plans = db.Table(
     "discipline_education_plans",
@@ -32,6 +33,11 @@ class EducationPlan(BaseModel):
         back_populates="education_plans",
         lazy="joined",
     )
+
+    @staticmethod
+    def get_all() -> list["EducationPlan"]:
+        with db_session() as session:
+            return session.query(EducationPlan).all()
 
     def create(self):
         with db_session() as session:
@@ -85,6 +91,21 @@ class EducationPlan(BaseModel):
         with db_session() as session:
             return (
                 session.query(EducationPlan).filter(EducationPlan.name == name).first()
+            )
+
+    @staticmethod
+    def get_by_year_profile_direction(year: int, profile: str, direction: str):
+        with db_session() as session:
+            return (
+                session.query(EducationPlan)
+                .filter(
+                    EducationPlan.profile == profile,
+                    EducationPlan.education_direction.has(
+                        EducationDirection.name == direction
+                    ),
+                    EducationPlan.year == year,
+                )
+                .first()
             )
 
     @staticmethod
