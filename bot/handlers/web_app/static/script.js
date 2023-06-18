@@ -83,9 +83,10 @@ function updateState(field, value) {
     } else if (field.startsWith("direction")) {
         const profiles = filterPlans(Number(state[`year${field.slice(-1)}`]), state[field]);
         updateSelect(`profile-select-${field.slice(-1)}`, getOnlyUnique(profiles, 'profile'), 'profile');
+        state[`profile${field.slice(-1)}`] = profiles.length > 0 ? profiles[0].profile : null;
     }
 
-    if (state.year1 && state.direction1 && state.profile1 && state.year2 && state.direction2 && state.profile2) {
+    if ((state.year1 && state.direction1 && state.profile1 && state.year2 && state.direction2 && state.profile2)) {
         setMainButtonVisible(true);
     } else {
         setMainButtonVisible(false);
