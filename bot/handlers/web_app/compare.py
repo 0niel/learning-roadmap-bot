@@ -8,8 +8,7 @@ from bot.models.education_plan import EducationPlan
 
 router = APIRouter()
 
-# templates dir from current dir
-templates = Jinja2Templates(directory="bot/handlers/web_app/templates")
+templates = Jinja2Templates(directory="bot/handlers/web_app/static")
 
 
 @router.get("/compare", response_class=HTMLResponse)
@@ -33,7 +32,7 @@ async def read_item(request: Request):
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     bot = context.bot
     await update.message.reply_text(
-        "Давайте откроем веб-приложение! Нажмите на прямую ссылку ниже. "
+        "Давайте откроем веб-приложение! Нажмите на прямую ссылку ниже.\n\n"
         f"https://t.me/{bot.username}/compare",
     )
 

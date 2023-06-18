@@ -6,11 +6,11 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 from telegram import Update
 from telegram.ext import Application
 from yappa.handlers.asgi import call_app
 from yappa.handlers.common import patch_response
-
 
 from bot.config import (
     BOT_URL,
@@ -80,6 +80,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.mount(
+    "/static", StaticFiles(directory="bot/handlers/web_app/static"), name="static"
+)
 
 
 @app.post("/telegram")
