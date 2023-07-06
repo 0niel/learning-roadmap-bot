@@ -10,6 +10,7 @@ async def help_callback(update: Update, context: CallbackContext) -> None:
         "и посмотреть учебный план для соответствующего профиля.\n\n"
         "<b>Примеры использования:</b>\n"
         "<code>09.03.04</code>\n"
+        "С инлайн режимом:\n"
         "<code>@learning_roadmap_bot 09.03.04</code>\n"
         "<code>@learning_roadmap_bot Программная инженерия</code>\n"
         "<code>@learning_roadmap_bot Разработка</code>\n\n\n"
