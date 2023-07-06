@@ -122,10 +122,18 @@ discipline_control_forms = db.Table(
     "discipline_control_forms",
     base.metadata,
     db.Column(
-        "discipline_id", db.Integer, db.ForeignKey(Discipline.id), nullable=False
+        "discipline_id",
+        db.Integer,
+        db.ForeignKey(Discipline.id),
+        nullable=False,
+        primary_key=True,
     ),
     db.Column(
-        "control_form_id", db.Integer, db.ForeignKey(ControlForm.id), nullable=False
+        "control_form_id",
+        db.Integer,
+        db.ForeignKey(ControlForm.id),
+        nullable=False,
+        primary_key=True,
     ),
 )
 

@@ -235,7 +235,12 @@ async def on_profile_selected(update: Update, context: CallbackContext) -> int:
     education_plan_id = int(update.callback_query.data.split("#")[1])
     education_plan = EducationPlan.get_by_id(education_plan_id)
 
-    text = f"Выбран профиль: {education_plan.profile}"
+    text = f"Выбран профиль: {education_plan.profile}\n\n"
+    text += "Учебный план: {education_plan.url}\n"
+
+    if education_plan.annot_url:
+        text += f"Описание дисциплин: {education_plan.annot_url}"
+
     if update.effective_message:
         await update.effective_message.reply_text(text)
     else:

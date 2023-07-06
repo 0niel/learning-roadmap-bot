@@ -9,8 +9,15 @@ from bot.models.education_direction import EducationDirection
 discipline_education_plans = db.Table(
     "discipline_education_plans",
     base.metadata,
-    db.Column("discipline_id", db.Integer, db.ForeignKey(Discipline.id)),
-    db.Column("education_plan_id", db.Integer, db.ForeignKey("education_plans.id")),
+    db.Column(
+        "discipline_id", db.Integer, db.ForeignKey(Discipline.id), primary_key=True
+    ),
+    db.Column(
+        "education_plan_id",
+        db.Integer,
+        db.ForeignKey("education_plans.id"),
+        primary_key=True,
+    ),
 )
 
 
@@ -33,6 +40,8 @@ class EducationPlan(BaseModel):
         back_populates="education_plans",
         lazy="joined",
     )
+    url = db.Column(db.UnicodeText, nullable=False)
+    annot_url = db.Column(db.UnicodeText, nullable=True)
 
     @staticmethod
     def get_all() -> list["EducationPlan"]:
